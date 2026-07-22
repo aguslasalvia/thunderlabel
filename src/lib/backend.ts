@@ -47,8 +47,9 @@ export async function saveTags(
   path: string,
   tags: Tag[],
   otherLines: string[],
+  deletedKeys: string[],
 ): Promise<void> {
-  await invoke("save_tags", { path, tags, otherLines });
+  await invoke("save_tags", { path, tags, otherLines, deletedKeys });
 }
 
 export async function confirmDelete(tagName: string): Promise<boolean> {

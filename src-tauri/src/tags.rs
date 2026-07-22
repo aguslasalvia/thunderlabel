@@ -138,8 +138,54 @@ pub fn load_tags(path: String) -> Result<LoadedTags, String> {
     })
 }
 
+fn strip_deleted_tag_lines(contents: &str, deleted_keys: &[String]) -> Option<String> {
+    if deleted_keys.is_empty() {
+        return None;
+    }
+    let re = tag_line_regex();
+    let mut changed = false;
+    let mut out = String::with_capacity(contents.len());
+
+    for line in contents.lines() {
+        if let Some(caps) = re.captures(line.trim_end()) {
+            let key = caps.get(1).unwrap().as_str();
+            if deleted_keys.iter().any(|k| k == key) {
+                changed = true;
+                continue;
+            }
+        }
+        out.push_str(line);
+        out.push('\n');
+    }
+
+    if changed {
+        Some(out)
+    } else {
+        None
+    }
+}
+
 #[tauri::command]
-pub fn save_tags(path: String, tags: Vec<Tag>, other_lines: Vec<String>) -> Result<(), String> {
+pub fn save_tags(
+    path: String,
+    tags: Vec<Tag>,
+    other_lines: Vec<String>,
+    deleted_keys: Vec<String>,
+) -> Result<(), String> {
     let rendered = render_user_js(&tags, &other_lines);
-    fs::write(&path, rendered).map_err(|e| e.to_string())
+    let user_js_path = Path::new(&path);
+    fs::write(user_js_path, rendered).map_err(|e| e.to_string())?;
+
+    if !deleted_keys.is_empty() {
+        if let Some(prefs_file) = user_js_path.parent().map(|dir| dir.join("prefs.js")) {
+            if prefs_file.exists() {
+                let contents = fs::read_to_string(&prefs_file).map_err(|e| e.to_string())?;
+                if let Some(updated) = strip_deleted_tag_lines(&contents, &deleted_keys) {
+                    fs::write(&prefs_file, updated).map_err(|e| e.to_string())?;
+                }
+            }
+        }
+    }
+
+    Ok(())
 }

@@ -24,6 +24,7 @@ function App() {
   const [folder, setFolder] = useState<string | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [otherLines, setOtherLines] = useState<string[]>([]);
+  const [deletedKeys, setDeletedKeys] = useState<string[]>([]);
   const [dirty, setDirty] = useState(false);
   const [picking, setPicking] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -46,6 +47,7 @@ function App() {
       setFolder(nextFolder);
       setTags(loaded.tags);
       setOtherLines(loaded.otherLines);
+      setDeletedKeys([]);
       setDirty(false);
       setWelcomeError(null);
       setShowRestartBanner(true);
@@ -90,6 +92,7 @@ function App() {
     const ok = await confirmDelete(tag.name || tag.key);
     if (!ok) return;
     setTags((prev) => prev.filter((t) => t.key !== tag.key));
+    setDeletedKeys((prev) => (prev.includes(tag.key) ? prev : [...prev, tag.key]));
     setDirty(true);
   }
 
@@ -103,7 +106,11 @@ function App() {
     if (!folder) return;
     setSaving(true);
     try {
-      await saveTags(userJsPath(folder), tags, otherLines);
+      const keysToRemove = deletedKeys.filter(
+        (key) => !tags.some((t) => t.key === key),
+      );
+      await saveTags(userJsPath(folder), tags, otherLines, keysToRemove);
+      setDeletedKeys([]);
       setDirty(false);
       setShowRestartBanner(true);
       setFlashRestart(true);
