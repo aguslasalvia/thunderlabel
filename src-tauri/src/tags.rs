@@ -4,6 +4,19 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::sync::OnceLock;
+use sysinfo::System;
+
+fn is_thunderbird_running() -> bool {
+    let mut system = System::new();
+    system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+    system.processes().values().any(|process| {
+        process
+            .name()
+            .to_string_lossy()
+            .to_lowercase()
+            .contains("thunderbird")
+    })
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tag {
@@ -172,6 +185,12 @@ pub fn save_tags(
     other_lines: Vec<String>,
     deleted_keys: Vec<String>,
 ) -> Result<(), String> {
+    if is_thunderbird_running() {
+        return Err(
+            "Thunderbird está abierto. Cerralo y volvé a guardar para evitar que sobreescriba los cambios.".to_string(),
+        );
+    }
+
     let rendered = render_user_js(&tags, &other_lines);
     let user_js_path = Path::new(&path);
     fs::write(user_js_path, rendered).map_err(|e| e.to_string())?;
