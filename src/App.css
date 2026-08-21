@@ -476,7 +476,7 @@ input:focus-visible {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  margin-top: 1rem;
+  margin-bottom: 1rem;
   padding: 0.4rem 0.2rem;
 }
 

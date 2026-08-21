@@ -147,11 +147,11 @@ function App() {
         />
       )}
       <section className="content">
-        <TagList tags={tags} onChange={handleTagChange} onDelete={handleTagDelete} />
         <AddTagForm
           defaultColor={nextColor(tags.map((t) => t.color))}
           onAdd={handleTagAdd}
         />
+        <TagList tags={tags} onChange={handleTagChange} onDelete={handleTagDelete} />
       </section>
     </main>
   );
