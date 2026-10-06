@@ -7,12 +7,28 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            artifact-name: thunderlabel-windows
+            args: ""
+          - platform: ubuntu-22.04
+            artifact-name: thunderlabel-linux
+            args: "--bundles deb,appimage"
+    runs-on: ${{ matrix.platform }}
     permissions:
       contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -58,16 +74,17 @@ jobs:
           releaseName: "Thunderlabel ${{ github.ref_name }}"
           releaseDraft: true
           prerelease: false
+          args: ${{ matrix.args }}
 
       - name: Build Tauri app
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        run: bun run tauri build
+        run: bun run tauri build -- ${{ matrix.args }}
 
       - name: Upload build artifacts
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4
         with:
-          name: thunderlabel-windows
+          name: ${{ matrix.artifact-name }}
           path: |
             src-tauri/target/release/bundle/**
           if-no-files-found: error
