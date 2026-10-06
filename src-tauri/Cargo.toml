@@ -1,7 +1,7 @@
 [package]
 name = "thunderlabel"
 version = "0.1.0"
-description = "A Tauri App"
+description = "Gestor de etiquetas de Thunderbird (user.js) para mantenerlas sincronizadas entre equipos"
 authors = ["you"]
 edition = "2021"
 

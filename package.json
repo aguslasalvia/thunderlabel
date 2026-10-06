@@ -1,5 +1,6 @@
 {
   "name": "thunderlabel",
+  "description": "Gestor de etiquetas de Thunderbird (user.js) para mantenerlas sincronizadas entre equipos",
   "private": true,
   "version": "0.1.0",
   "type": "module",
